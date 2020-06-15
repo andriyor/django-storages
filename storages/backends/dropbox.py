@@ -126,8 +126,7 @@ class DropBoxStorage(Storage):
         return metadata.client_modified
 
     def url(self, name):
-        media = self.client.files_get_temporary_link(self._full_path(name))
-        return media.link
+        return name
 
     def _open(self, name, mode='rb'):
         remote_file = DropBoxFile(self._full_path(name), self)
@@ -140,7 +139,9 @@ class DropBoxStorage(Storage):
         else:
             self._chunked_upload(content, self._full_path(name))
         content.close()
-        return name
+        shared_link = self.client.sharing_create_shared_link_with_settings(self._full_path(name))
+        downloadable_url = shared_link.url.replace('dl=0', 'dl=1')
+        return downloadable_url
 
     def _chunked_upload(self, content, dest_path):
         upload_session = self.client.files_upload_session_start(
